@@ -70,6 +70,18 @@ public class MainActivity extends AppCompatActivity {
             dbHelper.close();
             Toast.makeText(this, "데이터베이스가 재생성되었습니다.", Toast.LENGTH_SHORT).show();
         });
+
+        Button virustotal_test_page = findViewById(R.id.VirusTotal_Test_page);
+        virustotal_test_page.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, VirusTotal.class);
+            startActivity(intent);
+        });
+
+        Button virustotal_login_page = findViewById(R.id.VirusTotal_Login_page);
+        virustotal_login_page.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, VirusTotalActivity.class);
+            startActivity(intent);
+        });
     }
 
     @Override

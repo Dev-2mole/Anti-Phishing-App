@@ -6,6 +6,8 @@
         android:name="android.hardware.telephony"
         android:required="false" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -26,6 +28,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".UrlDatabaseActivity"/>
+        <activity android:name=".VirusTotal"/>
+        <activity android:name=".VirusTotalActivity"/>
         <receiver
             android:name=".SMSReceiver"
             android:exported="true">
