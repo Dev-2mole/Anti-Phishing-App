@@ -77,11 +77,6 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        Button virustotal_login_page = findViewById(R.id.VirusTotal_Login_page);
-        virustotal_login_page.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, VirusTotalActivity.class);
-            startActivity(intent);
-        });
     }
 
     @Override
