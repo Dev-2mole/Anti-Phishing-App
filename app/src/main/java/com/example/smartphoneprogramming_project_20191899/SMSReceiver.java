@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -40,12 +41,27 @@ public class SMSReceiver extends BroadcastReceiver {
                     SmsMessage sms = SmsMessage.createFromPdu((byte[]) pdu);
                     String messageBody = sms.getMessageBody();
                     String phoneNumber = sms.getOriginatingAddress();
+                    Log.d("SMSReceiver", "Received SMS from: " + phoneNumber + " Message: " + messageBody);
                     String url = extractUrl(messageBody);
                     if (url != null) {
+                        Log.d("SMSReceiver", "Extracted URL: " + url);
                         saveToDatabase(context, phoneNumber, url, messageBody);
+
+                        // VirusTotal 액티비티로 URL 전달
+                        SharedPreferences sharedPreferences = context.getSharedPreferences(MainActivity.PREFS_NAME, Context.MODE_PRIVATE);
+                        String serverAddress = sharedPreferences.getString(MainActivity.KEY_SERVER_ADDRESS, MainActivity.DEFAULT_SERVER_ADDRESS);
+                        Intent virusTotalIntent = new Intent(context, VirusTotal.class);
+                        virusTotalIntent.putExtra("serverAddress", serverAddress);
+                        virusTotalIntent.putExtra("url", url);
+                        virusTotalIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(virusTotalIntent);
+
+                        // 텍스트뷰 업데이트를 위한 로컬 브로드캐스트
                         Intent localIntent = new Intent(ACTION_UPDATE_TEXTVIEW);
                         localIntent.putExtra(EXTRA_URL, url);
                         LocalBroadcastManager.getInstance(context).sendBroadcast(localIntent);
+                    } else {
+                        Log.d("SMSReceiver", "No URL found in the message.");
                     }
                 }
             }

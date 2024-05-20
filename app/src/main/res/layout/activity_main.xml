@@ -37,10 +37,10 @@
         android:layout_height="wrap_content"
         android:text="VirusTotal Test" />
     <Button
-        android:id="@+id/VirusTotal_Login_page"
+        android:id="@+id/VirusTotal_local_server"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="VirusTotal login" />
+        android:text="VirusTotal 중계서버" />
 
 
 

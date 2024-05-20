@@ -1,0 +1,93 @@
+# -*- coding: utf-8 -*-
+from flask import Flask, request, jsonify
+import requests
+import logging
+import os
+from logging import StreamHandler
+
+app = Flask(__name__)
+
+# 바이러스토탈 API 키
+API_KEY = 'key'
+
+# 바이러스토탈 URL 스캔 API 주소
+VT_SCAN_URL = 'https://www.virustotal.com/vtapi/v2/url/scan'
+VT_REPORT_URL = 'https://www.virustotal.com/vtapi/v2/url/report'
+
+# 로그 설정
+log_stream = logging.StreamHandler()
+log_stream.setLevel(logging.DEBUG)
+log_formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+log_stream.setFormatter(log_formatter)
+app.logger.addHandler(log_stream)
+app.logger.setLevel(logging.DEBUG)
+
+@app.route('/scan', methods=['POST'])
+def scan_url():
+    app.logger.debug("Received request to /scan")
+    try:
+        data = request.json
+        app.logger.debug(f"Request data: {data}")
+        if not data or 'url' not in data:
+            app.logger.error("No URL provided in the request")
+            return jsonify({'error': 'No URL provided'}), 400
+        
+        params = {'apikey': API_KEY, 'url': data['url']}
+        app.logger.debug(f"Sending scan request to VirusTotal with params: {params}")
+        response = requests.post(VT_SCAN_URL, data=params)
+        scan_result = response.json()
+        scan_id = scan_result.get('scan_id')
+        app.logger.debug(f"Scan ID: {scan_id}")
+        if not scan_id:
+            app.logger.error("Failed to start the scan")
+            return jsonify({'error': 'Failed to start the scan'}), 500
+        
+        report_params = {'apikey': API_KEY, 'resource': scan_id}
+        try:
+            import time
+            time.sleep(15)  # API 결과를 기다리기 위해 지연
+            
+            response_report = requests.get(VT_REPORT_URL, params=report_params)
+            report = response_report.json()
+            app.logger.debug(f"Report: {report}")
+            
+            if report.get('response_code') == 1:
+                resource = report.get('resource')
+                report_url = f"https://www.virustotal.com/gui/url/{resource}"
+                permalink = report.get('permalink')  # permalink 추가
+                
+                result = {
+                    'verbose_msg': report.get('verbose_msg'),
+                    'permalink': permalink,  # permalink 추가
+                    'positives': report.get('positives'),
+                    'total': report.get('total'),
+                    'scan_results': report.get('scans', {}),
+                    'report_url': report_url
+                }
+                return jsonify(result), 200
+            else:
+                return jsonify({'error': 'Report is not ready'}), 202
+        except Exception as e:
+            app.logger.error(f"An error occurred while processing the report: {e}")
+            return jsonify({'error': str(e)}), 500
+    except Exception as e:
+        app.logger.error(f"An error occurred: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    app.logger.debug("Received request to /health")
+    return 'Server is up!', 200
+
+@app.route('/logs', methods=['GET'])
+def get_logs():
+    try:
+        with open(LOG_FILE, 'r') as f:
+            log_content = f.read()
+        return log_content, 200
+    except Exception as e:
+        app.logger.error(f"Failed to read log file: {e}")
+        return jsonify({'error': 'Failed to read log file'}), 500
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000)
